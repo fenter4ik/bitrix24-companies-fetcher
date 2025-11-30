@@ -4,7 +4,7 @@
 module.exports = {
   // Вебхук Bitrix24
   // Формат: https://ваш-портал.bitrix24.ru/rest/1/ваш-код/
-  BITRIX24_WEBHOOK: '',
+  BITRIX24_WEBHOOK: 'https://b24-ugt0oo.bitrix24.by/rest/1/o8c4pqguii2x9czx/',
   
   // Порт сервера
   PORT: 3000,
