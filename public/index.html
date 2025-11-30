@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitrix24 - Список компаний</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stats-item {
+            text-align: center;
+        }
+
+        .stats-item .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stats-item .label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="header">
+                <h1>📊 Bitrix24 - Список компаний</h1>
+                <p>Получение и отображение списка компаний через REST API</p>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <label for="webhook">Вебхук Bitrix24:</label>
+                    <input 
+                        type="text" 
+                        id="webhook"
+                        v-model="webhook" 
+                        placeholder="https://ваш-портал.bitrix24.ru/rest/1/ваш-код/"
+                    >
+                </div>
+                <button 
+                    class="btn" 
+                    @click="fetchCompanies" 
+                    :disabled="loading || !webhook"
+                >
+                    {{ loading ? 'Загрузка...' : 'Получить компании' }}
+                </button>
+
+                <div v-if="statusMessage" :class="['status', statusType]">
+                    {{ statusMessage }}
+                </div>
+            </div>
+
+            <div v-if="companies.length > 0" class="stats">
+                <div class="stats-item">
+                    <div class="value">{{ companies.length }}</div>
+                    <div class="label">Всего компаний</div>
+                </div>
+                <div class="stats-item">
+                    <div class="value">{{ filteredCompanies.length }}</div>
+                    <div class="label">Отображается</div>
+                </div>
+            </div>
+
+            <div v-if="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Загрузка данных из Bitrix24...</p>
+            </div>
+
+            <div v-else-if="companies.length === 0 && !loading" class="empty">
+                <p>Нет данных. Введите вебхук и нажмите "Получить компании"</p>
+            </div>
+
+            <div v-else class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Название</th>
+                            <th>Тип</th>
+                            <th>Отрасль</th>
+                            <th>Сотрудники</th>
+                            <th>Доход</th>
+                            <th>Телефон</th>
+                            <th>Email</th>
+                            <th>Сайт</th>
+                            <th>Дата создания</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="company in filteredCompanies" :key="company.ID">
+                            <td>{{ company.ID }}</td>
+                            <td><strong>{{ company.TITLE || 'Без названия' }}</strong></td>
+                            <td>
+                                <span v-if="company.COMPANY_TYPE" class="badge badge-primary">
+                                    {{ company.COMPANY_TYPE }}
+                                </span>
+                            </td>
+                            <td>{{ company.INDUSTRY || '-' }}</td>
+                            <td>{{ company.EMPLOYEES || '-' }}</td>
+                            <td>
+                                <span v-if="company.REVENUE">
+                                    {{ formatRevenue(company.REVENUE) }} {{ company.CURRENCY_ID || '' }}
+                                </span>
+                                <span v-else>-</span>
+                            </td>
+                            <td>
+                                <span v-for="(phone, index) in getPhones(company.PHONE)" :key="index">
+                                    {{ phone.VALUE }}<br>
+                                </span>
+                                <span v-if="!company.PHONE || company.PHONE.length === 0">-</span>
+                            </td>
+                            <td>
+                                <span v-for="(email, index) in getEmails(company.EMAIL)" :key="index">
+                                    {{ email.VALUE }}<br>
+                                </span>
+                                <span v-if="!company.EMAIL || company.EMAIL.length === 0">-</span>
+                            </td>
+                            <td>
+                                <a v-if="company.WEB && company.WEB.length > 0" 
+                                   :href="company.WEB[0].VALUE" 
+                                   target="_blank">
+                                    {{ company.WEB[0].VALUE }}
+                                </a>
+                                <span v-else>-</span>
+                            </td>
+                            <td>{{ formatDate(company.DATE_CREATE) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    webhook: '',
+                    companies: [],
+                    loading: false,
+                    statusMessage: '',
+                    statusType: 'info'
+                };
+            },
+            computed: {
+                filteredCompanies() {
+                    return this.companies;
+                }
+            },
+            methods: {
+                async fetchCompanies() {
+                    if (!this.webhook) {
+                        this.showStatus('Введите вебхук Bitrix24', 'error');
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.statusMessage = '';
+                    this.companies = [];
+
+                    try {
+                        const response = await fetch('/api/fetch-companies', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ webhook: this.webhook })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            this.companies = data.companies;
+                            this.showStatus(
+                                `Успешно получено ${data.count} компаний из Bitrix24`, 
+                                'success'
+                            );
+                        } else {
+                            this.showStatus(
+                                `Ошибка: ${data.error || 'Неизвестная ошибка'}`, 
+                                'error'
+                            );
+                        }
+                    } catch (error) {
+                        this.showStatus(
+                            `Ошибка соединения: ${error.message}`, 
+                            'error'
+                        );
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                showStatus(message, type) {
+                    this.statusMessage = message;
+                    this.statusType = type;
+                    if (type === 'success') {
+                        setTimeout(() => {
+                            this.statusMessage = '';
+                        }, 5000);
+                    }
+                },
+                formatDate(dateString) {
+                    if (!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleString('ru-RU');
+                },
+                formatRevenue(revenue) {
+                    if (!revenue) return '-';
+                    return new Intl.NumberFormat('ru-RU').format(revenue);
+                },
+                getPhones(phoneData) {
+                    if (!phoneData || !Array.isArray(phoneData)) return [];
+                    return phoneData;
+                },
+                getEmails(emailData) {
+                    if (!emailData || !Array.isArray(emailData)) return [];
+                    return emailData;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+
