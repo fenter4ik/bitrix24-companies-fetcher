@@ -34,6 +34,11 @@ async function fetchCompaniesFromBitrix24(webhook, limit = 10000) {
 
       const response = await axios.post(url, params);
       
+      // Проверка на ошибки Bitrix24
+      if (response.data.error) {
+        throw new Error(`Bitrix24 API ошибка: ${response.data.error_description || response.data.error}`);
+      }
+      
       if (!response.data || !response.data.result) {
         console.error('Ошибка ответа от Bitrix24:', response.data);
         break;
